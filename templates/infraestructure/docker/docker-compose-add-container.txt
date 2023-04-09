@@ -1,0 +1,4 @@
+  microservice_name:
+    build: ./services/microservice_name
+    ports:
+      - "8000:8000"
