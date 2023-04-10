@@ -7,12 +7,12 @@ options=("FastApi (Python)" "NodeJS (Javascript)" "Cancel\n")
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-PROMT_MESSAGE='echo -e "\033[0mCHOOSE THE BACKEND ENVIRONMENT: "\n'
+PROMT_MESSAGE='echo -e \n"\033[0mCHOOSE THE BACKEND ENVIRONMENT: "\n'
 
 printf "\033[?25l\033[s"
 
 # Prompt the user for a microservice name
-echo -n "Enter a name for your microservice: "
+echo -n \n"Enter a name for your microservice: "
 read microservice_name
 
 selected=0
@@ -60,21 +60,28 @@ clear
 case $option in
     "${options[0]}")
         echo "Creating FastApi (Python) microservice $microservice_name ..."
-        # Python Commands
+        # Go to the services folder
         cd api/services && 
         mkdir $microservice_name &&
         cd $microservice_name
+        # Create a virtual environment & install dependencies
         python3 -m venv venv &&
         source venv/bin/activate &&
         pip install --upgrade pip &&
         pip install fastapi uvicorn httpx pytest
         pip freeze > requirements.txt
+        # Copying the template and creating the files
         file_content=$(cat ../../../templates/python/fastapi/basic_server.py)
         test_content=$(cat ../../../templates/python/fastapi/test_basic_server.py)
-        new_content=${file_content//microservice_name/$($new_title)}
-        new_test_content=${test_content//microservice_name/$($new_title)}
+        dockerfile_content=$(cat ../../../templates/infraestructure/docker/fastapi_dockerfile)
+        # Replacing the microservice_name string with the name of the microservice
+        new_content=${file_content//microservice_name/$microservice_name}
+        # this line get the same result that the line above. It's just a different way to do it
+        new_test_content=${test_content//microservice_name/$(echo "$microservice_name")}
+        # Creating the files
         echo "$new_content" > main.py
         echo "$new_test_content" > test_main.py
+        echo "$dockerfile_content" > dockerfile
         ;;
     "${options[1]}")
         echo "Creating NodeJS (Javascript) microservice $microservice_name ..."
