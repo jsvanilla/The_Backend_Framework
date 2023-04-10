@@ -12,7 +12,7 @@ PROMT_MESSAGE='echo -e \n"\033[0mCHOOSE THE BACKEND ENVIRONMENT: "\n'
 printf "\033[?25l\033[s"
 
 # Prompt the user for a microservice name
-echo -n \n"Enter a name for your microservice: "
+echo -n "Enter a name for your microservice: "
 read microservice_name
 
 selected=0
@@ -56,14 +56,40 @@ printf "\033[u\033[?25h"
 
 clear
 
+
+
+function move_to_microservice_folder() {
+    cd api/services && 
+    mkdir $microservice_name &&
+    cd $microservice_name
+}
+
+function update_docker_compose() {
+    docker_compose_route="../../docker-compose.yml"
+    if [ -s "$docker_compose_route" ]; then
+        current_port=$(cat "../../../templates/infraestructure/docker/docker_current_port.txt")
+        new_port=$((current_port + 1))
+        echo "$new_port" > "../../../templates/infraestructure/docker/docker_current_port.txt"
+        docker_compose_add_content=$(cat ../../templates/infraestructure/docker/docker-compose-add-container.txt)
+        new_port_docker_compose=${docker_compose_add_content//$current_port/$new_port}
+        new_docker_compose_add_content=${new_port_docker_compose//microservice_name/$microservice_name}
+        echo "$new_docker_compose_add_content" >> "$docker_compose_route"
+        # update dockerfile
+        dockerfile_content=$(cat dockerfile)
+        new_dockerfile_content=${dockerfile_content//$current_port/$new_port}
+        echo "$new_dockerfile_content" > dockerfile
+    else
+        docker_compose_new_content=$(cat ../../templates/infraestructure/docker/docker-compose-new-template.yml)
+        new_docker_compose_content=${docker_compose_new_content//microservice_name/$microservice_name}
+        echo "$new_docker_compose_content" > "$docker_compose_route"
+    fi
+}
+
 # Execute selected option
 case $option in
     "${options[0]}")
         echo "Creating FastApi (Python) microservice $microservice_name ..."
-        # Go to the services folder
-        cd api/services && 
-        mkdir $microservice_name &&
-        cd $microservice_name
+        move_to_microservice_folder
         # Create a virtual environment & install dependencies
         python3 -m venv venv &&
         source venv/bin/activate &&
@@ -82,6 +108,8 @@ case $option in
         echo "$new_content" > main.py
         echo "$new_test_content" > test_main.py
         echo "$dockerfile_content" > dockerfile
+        update_docker_compose
+        printf "\n${GREEN}➤ ${microservice_name} 'was succesfully created!' \n"
         ;;
     "${options[1]}")
         echo "Creating NodeJS (Javascript) microservice $microservice_name ..."
@@ -92,3 +120,4 @@ case $option in
         ;;
     *) echo "Invalid Option";;
 esac
+
