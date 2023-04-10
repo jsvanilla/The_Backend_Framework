@@ -66,7 +66,11 @@ function move_to_microservice_folder() {
 
 function update_docker_compose() {
     docker_compose_route="../../docker-compose.yml"
-    if [ -s "$docker_compose_route" ]; then
+    if ! grep -q "[^[:space:]]" "$docker_compose_route"; then
+        docker_compose_new_content=$(cat ../../templates/infraestructure/docker/docker-compose-new-template.yml)
+        new_docker_compose_content=${docker_compose_new_content//microservice_name/$microservice_name}
+        echo "$new_docker_compose_content" > "$docker_compose_route"
+    else
         current_port=$(cat "../../../templates/infraestructure/docker/docker_current_port.txt")
         new_port=$((current_port + 1))
         echo "$new_port" > "../../../templates/infraestructure/docker/docker_current_port.txt"
@@ -78,10 +82,6 @@ function update_docker_compose() {
         dockerfile_content=$(cat dockerfile)
         new_dockerfile_content=${dockerfile_content//$current_port/$new_port}
         echo "$new_dockerfile_content" > dockerfile
-    else
-        docker_compose_new_content=$(cat ../../templates/infraestructure/docker/docker-compose-new-template.yml)
-        new_docker_compose_content=${docker_compose_new_content//microservice_name/$microservice_name}
-        echo "$new_docker_compose_content" > "$docker_compose_route"
     fi
 }
 
@@ -109,7 +109,7 @@ case $option in
         echo "$new_test_content" > test_main.py
         echo "$dockerfile_content" > dockerfile
         update_docker_compose
-        printf "\n${GREEN}➤ ${microservice_name} 'was succesfully created!' \n"
+        printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
         ;;
     "${options[1]}")
         echo "Creating NodeJS (Javascript) microservice $microservice_name ..."
