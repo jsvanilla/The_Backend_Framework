@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # options to display
-options=("FastApi (Python)" "Express (Javascript)" "NestJS (Javascript)" "Actix (Rust)" "Cancel\n")
-
+options=("FastApi (Python)" "Express (NodeJS)" "NestJS (NodeJS)" "Actix (Rust)" "Cancel\n")
 
 RED='\033[31m'
 YELLOW='\033[33m'
@@ -60,6 +59,9 @@ clear
 
 
 function move_to_microservice_folder() {
+    if [ ! -d "api/services" ]; then
+        mkdir api/services
+    fi
     cd api/services && 
     mkdir $microservice_name &&
     cd $microservice_name
@@ -76,7 +78,7 @@ function update_docker_compose() {
         new_port=$((current_port + 1))
         echo "$new_port" > "../../../templates/infraestructure/docker/docker_current_port.txt"
         docker_compose_add_content=$(cat ../../../templates/infraestructure/docker/docker-compose-add-container.txt)
-        new_port_docker_compose=${docker_compose_add_content//$current_port/$new_port}
+        new_port_docker_compose=${docker_compose_add_content//8000/$new_port}
         new_docker_compose_add_content=${new_port_docker_compose//microservice_name/$microservice_name}
         echo "$new_docker_compose_add_content" >> "$docker_compose_route"
         # update dockerfile
@@ -113,7 +115,7 @@ case $option in
         printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
         ;;
     "${options[1]}")
-        echo "Creating NodeJS (Javascript) microservice $microservice_name ..."
+        echo "Creating Express (NodeJS) microservice $microservice_name ..."
         move_to_microservice_folder
         # Initialize package.json and install dependencies
         npm init -y &&
@@ -121,7 +123,7 @@ case $option in
         npm install --save-dev nodemon
         # Copying the template and creating the files
         file_content=$(cat ../../../templates/javascript/express/basic_server.js)
-        dockerfile_content=$(cat ../../../templates/infraestructure/docker/nodejs_dockerfile)
+        dockerfile_content=$(cat ../../../templates/infraestructure/docker/express_dockerfile)
         # Replacing the microservice_name string with the name of the microservice
         new_content=${file_content//microservice_name/$microservice_name}
         # Creating the files
@@ -133,7 +135,7 @@ case $option in
         printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
         ;;
     "${options[2]}")
-        echo "Creating NodeJS (NestJS) microservice $microservice_name ..."
+        echo "Creating NestJS (NodeJS) microservice $microservice_name ..."
         move_to_microservice_folder
         # Initialize package.json and install dependencies
         npm init -y &&
@@ -143,7 +145,7 @@ case $option in
         npm install &&
         npm install --save-dev nodemon
         # Copying the template and creating the files
-        dockerfile_content=$(cat ../../../../templates/infraestructure/docker/nodejs_dockerfile)
+        dockerfile_content=$(cat ../../../../templates/infraestructure/docker/express_dockerfile)
         # Creating the files
         echo "$dockerfile_content" > dockerfile
         # Add "start" script to package.json
