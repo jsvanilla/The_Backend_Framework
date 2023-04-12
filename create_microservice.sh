@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # options to display
-options=("FastApi (Python)" "NodeJS (Javascript)" "Cancel\n")
+options=("FastApi (Python)" "Express (Javascript)" "NestJS (Javascript)" "Actix (Rust)" "Cancel\n")
 
 
 RED='\033[0;31m'
@@ -113,9 +113,64 @@ case $option in
         ;;
     "${options[1]}")
         echo "Creating NodeJS (Javascript) microservice $microservice_name ..."
-        # Javascript Commands
+        move_to_microservice_folder
+        # Initialize package.json and install dependencies
+        npm init -y &&
+        npm install express &&
+        npm install --save-dev nodemon
+        # Copying the template and creating the files
+        file_content=$(cat ../../../templates/javascript/express/basic_server.js)
+        dockerfile_content=$(cat ../../../templates/infraestructure/docker/nodejs_dockerfile)
+        # Replacing the microservice_name string with the name of the microservice
+        new_content=${file_content//microservice_name/$microservice_name}
+        # Creating the files
+        echo "$new_content" > index.js
+        echo "$dockerfile_content" > dockerfile
+        # Add "start" script to package.json
+        sed -i 's/"scripts": {/"scripts": {\n    "start": "nodemon index.js",/' package.json
+        update_docker_compose
+        printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
         ;;
     "${options[2]}")
+        echo "Creating NodeJS (NestJS) microservice $microservice_name ..."
+        move_to_microservice_folder
+        # Initialize package.json and install dependencies
+        npm init -y &&
+        npm install --global @nestjs/cli &&
+        nest new $microservice_name --skip-install &&
+        cd $microservice_name &&
+        npm install &&
+        npm install --save-dev nodemon
+        # Copying the template and creating the files
+        dockerfile_content=$(cat ../../../../templates/infraestructure/docker/nodejs_dockerfile)
+        # Creating the files
+        echo "$dockerfile_content" > dockerfile
+        # Add "start" script to package.json
+        sed -i 's/"scripts": {/"scripts": {\n    "start": "nodemon src/main.ts",/' package.json
+        update_docker_compose
+        printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
+        ;;
+    "${options[3]}")
+        echo "Creating Rust (Actix) microservice $microservice_name ..."
+        move_to_microservice_folder
+        # Install Rust and create a new project
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+        cargo new $microservice_name
+        cd $microservice_name
+        # Add Actix dependencies to Cargo.toml
+        echo 'actix-web = "4"' >> Cargo.toml
+        echo 'actix-rt = "2"' >> Cargo.toml
+        echo 'serde = { version = "1", features = ["derive"] }' >> Cargo.toml
+        # Replace src/main.rs with a basic Actix Web app
+        echo 'use actix_web::{web, App, HttpResponse, HttpServer, Responder};' > src/main.rs
+        echo 'use serde::Serialize;' >> src/main.rs
+        # Build the project
+        cargo build
+        update_docker_compose
+        printf "\n${GREEN} ${microservice_name} was succesfully created!\n"
+        ;;
+    "${options[4]}")
         echo "Exiting..."
         ;;
     *) echo "Invalid Option";;

@@ -1,0 +1,29 @@
+# Use the official Rust image as the base image
+FROM rust:1.57 as builder
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy the source code into the container
+COPY . .
+
+# Build the application in release mode
+RUN cargo build --release
+
+# Start a new stage with a minimal image
+FROM debian:buster-slim
+
+# Install the necessary runtime dependencies
+RUN apt-get update && \
+  apt-get install -y libssl-dev && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
+
+# Copy the binary from the builder stage
+COPY --from=builder /usr/src/app/target/release/microservice_name /usr/local/bin/microservice_name
+
+# Expose the application port
+EXPOSE 8080
+
+# Start the application
+CMD ["microservice_name"]
