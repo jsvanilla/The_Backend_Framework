@@ -4,8 +4,9 @@
 options=("FastApi (Python)" "Express (Javascript)" "NestJS (Javascript)" "Actix (Rust)" "Cancel\n")
 
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
+RED='\033[31m'
+YELLOW='\033[33m'
+GREEN='\033[32m'
 NC='\033[0m'
 PROMT_MESSAGE='echo -e \n"\033[0mCHOOSE THE BACKEND ENVIRONMENT: "\n'
 
@@ -67,14 +68,14 @@ function move_to_microservice_folder() {
 function update_docker_compose() {
     docker_compose_route="../../docker-compose.yml"
     if ! grep -q "[^[:space:]]" "$docker_compose_route"; then
-        docker_compose_new_content=$(cat ../../templates/infraestructure/docker/docker-compose-new-template.yml)
+        docker_compose_new_content=$(cat ../../../templates/infraestructure/docker/docker-compose-new-template.yml)
         new_docker_compose_content=${docker_compose_new_content//microservice_name/$microservice_name}
         echo "$new_docker_compose_content" > "$docker_compose_route"
     else
         current_port=$(cat "../../../templates/infraestructure/docker/docker_current_port.txt")
         new_port=$((current_port + 1))
         echo "$new_port" > "../../../templates/infraestructure/docker/docker_current_port.txt"
-        docker_compose_add_content=$(cat ../../templates/infraestructure/docker/docker-compose-add-container.txt)
+        docker_compose_add_content=$(cat ../../../templates/infraestructure/docker/docker-compose-add-container.txt)
         new_port_docker_compose=${docker_compose_add_content//$current_port/$new_port}
         new_docker_compose_add_content=${new_port_docker_compose//microservice_name/$microservice_name}
         echo "$new_docker_compose_add_content" >> "$docker_compose_route"
